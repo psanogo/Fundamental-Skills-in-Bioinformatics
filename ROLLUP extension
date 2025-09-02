@@ -1,0 +1,23 @@
+-- This SQL query uses the ROLLUP extension of the GROUP BY clause
+-- to generate subtotals and a grand total for sales data.
+--
+-- The query calculates the sum of `total_sales` based on a hierarchy
+-- of `year` and `country`.
+--
+-- The ROLLUP(year, country) will produce aggregations for:
+--   1. (year, country): Sales for each country within each year.
+--   2. (year): Subtotal sales for each year.
+--   3. (): The grand total of all sales.
+--
+-- A NULL value in the 'country' column indicates a subtotal for the 'year'.
+-- A NULL value in both 'year' and 'country' indicates the grand total.
+
+SELECT
+    year,
+    country,
+    SUM(total_sales) AS total_sales
+FROM
+    sales_data
+GROUP BY
+    ROLLUP(year, country);
+
