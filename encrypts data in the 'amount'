@@ -1,0 +1,25 @@
+# Conceptual steps:
+# 1. Derive a key from the passphrase (e.g., using PBKDF2 or similar KDF)
+#    This is typically done in programming languages, not directly in shell for a "hashed passphrase"
+#    For a simple, fixed passphrase, OpenSSL can use it directly as a key
+# 2. Encrypt the 'amount' value using this key
+
+# Example: Encrypting a single amount (e.g., 123.45) from a file or variable
+# This is a highly simplified example and NOT for production use directly.
+# Replace 'your_secret_passphrase' with the actual passphrase
+# The '-pbkdf2' is crucial for deriving a key from a passphrase.
+# The actual amount data would need to be read from the FactSales table row by row.
+
+# To encrypt a string '123.45' using a passphrase and store it as base64
+# This is NOT a direct database command, but a conceptual encryption step
+echo "123.45" | openssl enc -aes-256-cbc -e -base64 -pbkdf2 -k "your_secret_passphrase" > encrypted_amount.txt
+
+# This output (encrypted_amount.txt) would then be inserted into the database.
+# In a real scenario, you'd iterate through rows of FactSales, encrypt each amount,
+# and then update the 'amount' field (which would need to be of a suitable type, e.g., VARBINARY or BLOB, to store encrypted data).
+
+# SQL command to update the table with encrypted data (conceptual)
+# This assumes 'amount' column type is suitable for binary/encrypted data
+# And 'encrypted_data_blob' comes from the output of an encryption process like above
+# This would be part of a larger update script, not a single command.
+-- UPDATE FactSales SET amount = 'encrypted_data_blob' WHERE sales_id = 123;
