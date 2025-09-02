@@ -1,0 +1,47 @@
+from cryptography.hazmat.primitives import kdf
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+import os
+import base64
+
+def encrypt_amount(original_amount, passphrase):
+    # 1. Key Derivation (using PBKDF2 as an example of "hashed passphrase")
+    salt = os.urandom(16) # Unique salt for each encryption
+    kdf = kdf.PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32, # AES-256 key length
+        salt=salt,
+        iterations=100000, # High iteration count for security
+        backend=default_backend()
+    )
+    key = kdf.derive(passphrase.encode())
+
+    # 2. Encryption (using AES-256 in GCM mode for authenticity)
+    iv = os.urandom(12) # Initialization Vector for GCM
+    cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
+    encryptor = cipher.encryptor()
+    
+    # Authenticated Data (optional, but good for integrity)
+    # encryptor.authenticate_additional_data(b"some_associated_data") 
+    
+    # Convert amount to bytes
+    plaintext_bytes = str(original_amount).encode('utf-8') 
+    ciphertext = encryptor.update(plaintext_bytes) + encryptor.finalize()
+    tag = encryptor.tag
+
+    # 3. Store salt, IV, ciphertext, and tag (needed for decryption)
+    # Typically concatenate them or store separately. Base64 encode for string storage.
+    encrypted_data_blob = base64.b64encode(salt + iv + ciphertext + tag)
+    return encrypted_data_blob.decode('utf-8') # Return as a string for database storage
+
+
+# Example of how it would be used in a script to update a database:
+# assuming db_connection is established
+# and you iterate through records to update
+# original_amount = 123.45
+# hashed_passphrase = "my_super_secret_phrase" # This is the "passphrase" part
+
+# encrypted_value_for_db = encrypt_amount(original_amount, hashed_passphrase)
+
+# Then, the SQL update would be:
+# UPDATE FactSales SET amount = '{encrypted_value_for_db}' WHERE sales_id = <current_sales_id>;
