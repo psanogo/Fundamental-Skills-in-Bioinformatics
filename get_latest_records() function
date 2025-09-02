@@ -1,0 +1,55 @@
+def get_latest_records(last_known_row_id, db_connection):
+    """
+    Retrieves records from the 'sales_data' table with row IDs greater than
+    the given last_known_row_id.
+
+    Args:
+        last_known_row_id (int): The row ID from which to start retrieving records.
+                                 Records with row IDs greater than this value will be fetched.
+        db_connection: An active database connection object (e.g., psycopg2,
+                       MySQLdb connection, or BigQuery client).
+
+    Returns:
+        list of dicts or list of tuples: A list containing the fetched records.
+                                        Returns an empty list if no new records are found.
+    """
+    if not isinstance(last_known_row_id, int) or last_known_row_id < 0:
+        raise ValueError("last_known_row_id must be a non-negative integer.")
+
+    try:
+        cursor = db_connection.cursor()
+        # SQL query to select all columns from sales_data where row_id is greater
+        # than the provided last_known_row_id.
+        # ORDER BY ensures consistent ordering, useful for subsequent calls.
+        sql_query = f"SELECT * FROM sales_data WHERE row_id > {last_known_row_id} ORDER BY row_id ASC;"
+        
+        cursor.execute(sql_query)
+        
+        # Fetch all results
+        records = cursor.fetchall()
+
+        # Depending on the database connector, you might want to fetch column names
+        # to return a list of dictionaries for easier access (e.g., for BigQuery).
+        # For simple tuples, fetchall() is usually sufficient.
+        
+        return records
+    except Exception as e:
+        print(f"Error fetching latest records: {e}")
+        # In a real-world scenario, you might want more sophisticated error handling
+        # or logging.
+        return []
+    finally:
+        # It's good practice to close the cursor if not managed by a 'with' statement
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+
+# Example Usage (conceptual, as db_connection needs to be established):
+# Assuming you have a connection object 'my_db_conn'
+# new_records = get_latest_records(100, my_db_conn)
+# if new_records:
+#     print(f"Fetched {len(new_records)} new records.")
+#     for record in new_records:
+#         print(record)
+# else:
+#     print("No new records found.")
+
