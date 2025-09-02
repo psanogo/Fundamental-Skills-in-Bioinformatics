@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# --- Configuration ---
+DB_USER="your_db_user"          # MySQL database user
+DB_PASSWORD="your_db_password"  # MySQL database password (use .my.cnf for production)
+DB_NAME="your_database_name"    # Name of the database to backup
+BACKUP_DIR="/var/backups/mysql" # Directory where backups will be stored
+RETENTION_DAYS=10               # Number of days to keep backups
+
+# --- Script Logic ---
+
+# 1. Create backup directory if it doesn't exist
+mkdir -p "$BACKUP_DIR"
+
+# Check if directory creation was successful
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to create backup directory $BACKUP_DIR. Exiting."
+    exit 1
+fi
+
+# 2. Define backup filename with timestamp
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="${DB_NAME}_${TIMESTAMP}.sql.gz"
+FULL_BACKUP_PATH="$BACKUP_DIR/$BACKUP_FILE"
+
+echo "Starting backup of database '$DB_NAME' to '$FULL_BACKUP_PATH'..."
+
+# 3. Perform the database backup using mysqldump and gzip
+# Using --single-transaction for InnoDB for consistent backups
+# Using -p"$DB_PASSWORD" directly is INSECURE for production.
+# Consider using .my.cnf file (https://dev.mysql.com/doc/refman/8.0/en/option-files.html)
+# or environment variables for passing password securely.
+mysqldump -u "$DB_USER" -p"$DB_PASSWORD" --single-transaction "$DB_NAME" | gzip > "$FULL_BACKUP_PATH"
+
+# Check if mysqldump was successful
+if [ $? -eq 0 ]; then
+    echo "Backup completed successfully."
+else
+    echo "Error: Database backup failed."
+    rm -f "$FULL_BACKUP_PATH" # Clean up incomplete backup file
+    exit 1
+fi
+
+# 4. Implement retention policy
+echo "Implementing retention policy: Deleting backups older than $RETENTION_DAYS days..."
+# Find files older than RETENTION_DAYS and delete them
+find "$BACKUP_DIR" -type f -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
+
+# Check if find command was successful
+if [ $? -eq 0 ]; then
+    echo "Retention policy applied successfully."
+else
+    echo "Error: Failed to apply retention policy. Check permissions or path."
+    exit 1
+fi
+
+echo "Backup script finished."
+
