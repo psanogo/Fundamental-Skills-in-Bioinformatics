@@ -1,0 +1,1 @@
+CREATE INDEX country_id ON FactSales (countryid);
