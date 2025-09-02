@@ -1,0 +1,53 @@
+import tarfile
+import os
+
+def archive_file_to_tar(file_to_archive, archive_name):
+    """
+    Archives a specified file into a tar archive.
+
+    Args:
+        file_to_archive (str): The path to the file to be archived (e.g., 'transformed_data.txt').
+        archive_name (str): The name of the tar archive to create (e.g., 'weblog.tar').
+    """
+    try:
+        # Check if the file to archive exists
+        if not os.path.exists(file_to_archive):
+            print(f"Error: File to archive '{file_to_archive}' not found.")
+            return
+
+        # Create a new tar archive in 'w' (write) mode
+        # 'w' mode creates an uncompressed tar file. Use 'w:gz' for gzipped tar.
+        with tarfile.open(archive_name, 'w') as tar:
+            # Add the file to the archive.
+            # The arcname argument specifies the name of the file inside the archive.
+            # If not provided, it defaults to the basename of file_to_archive.
+            tar.add(file_to_archive, arcname=os.path.basename(file_to_archive))
+        
+        print(f"Successfully archived '{file_to_archive}' into '{archive_name}'.")
+
+    except Exception as e:
+        print(f"An error occurred during archiving: {e}")
+
+# --- Example Usage ---
+# Create a dummy 'transformed_data.txt' for testing
+dummy_content = "Line 1\nLine 2\nLine 3\n"
+with open('transformed_data.txt', 'w') as f:
+    f.write(dummy_content)
+
+# Define the file to be archived and the archive name
+file_to_archive = 'transformed_data.txt'
+archive_name = 'weblog.tar'
+
+# Run the archiving function
+archive_file_to_tar(file_to_archive, archive_name)
+
+# Optional: Verify the contents of the tar file (for demonstration)
+# try:
+#     with tarfile.open(archive_name, 'r') as tar:
+#         print(f"\nContents of {archive_name}:")
+#         for member in tar.getmembers():
+#             print(f"  - {member.name} (size: {member.size} bytes)")
+#         # You can also extract to verify
+#         # tar.extractall(path='extracted_archive')
+# except Exception as e:
+#     print(f"Error verifying archive: {e}")
