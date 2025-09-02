@@ -1,0 +1,62 @@
+def transform_ip_data(input_file_path, output_file_path, ip_to_remove):
+    """
+    Reads lines from an input file, removes lines containing a specific IP address,
+    and writes the remaining lines to an output file.
+
+    Args:
+        input_file_path (str): The path to the input file (e.g., 'extracted_data.txt').
+        output_file_path (str): The path to the output file (e.g., 'transformed_data.txt').
+        ip_to_remove (str): The IP address string to filter out (e.g., '198.46.149.143').
+    """
+    try:
+        # Read all lines from the input file
+        with open(input_file_path, 'r') as infile:
+            lines = infile.readlines()
+
+        filtered_lines = []
+        for line in lines:
+            # Check if the line contains the IP address to remove
+            if ip_to_remove not in line:
+                filtered_lines.append(line)
+        
+        # Write the filtered lines to the output file
+        with open(output_file_path, 'w') as outfile:
+            outfile.writelines(filtered_lines)
+            
+        print(f"Successfully processed data from '{input_file_path}'.")
+        print(f"Removed lines containing '{ip_to_remove}'.")
+        print(f"Remaining {len(filtered_lines)} lines written to '{output_file_path}'.")
+
+    except FileNotFoundError:
+        print(f"Error: Input file not found at '{input_file_path}'.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# --- Example Usage ---
+# 1. Create a dummy 'extracted_data.txt' for testing
+dummy_extracted_data = """
+192.168.1.1
+10.0.0.5
+198.46.149.143
+172.16.0.10
+198.46.149.143
+192.168.1.254
+"""
+with open('extracted_data.txt', 'w') as f:
+    f.write(dummy_extracted_data)
+
+# Define the file paths and the IP to remove
+input_file = 'extracted_data.txt'
+output_file = 'transformed_data.txt'
+forbidden_ip = '198.46.149.143'
+
+# Run the transformation function
+transform_ip_data(input_file, output_file, forbidden_ip)
+
+# Optional: Verify the content of the transformed_data.txt
+# try:
+#     with open(output_file, 'r') as f:
+#         print("\nContent of 'transformed_data.txt':")
+#         print(f.read())
+# except FileNotFoundError:
+#     pass
