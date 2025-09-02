@@ -1,0 +1,11 @@
+SELECT
+    sale_year,
+    sale_country,
+    AVG(sale_amount) AS average_sales
+FROM
+    sales_data
+GROUP BY
+    CUBE(sale_year, sale_country)
+ORDER BY
+    sale_year ASC NULLS LAST,
+    sale_country ASC NULLS LAST;
