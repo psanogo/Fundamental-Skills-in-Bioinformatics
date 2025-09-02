@@ -1,0 +1,43 @@
+from airflow import DAG
+from airflow.operators.bash import BashOperator # Example operator
+from datetime import datetime, timedelta
+
+# Define default arguments for the DAG
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'email': ['airflow@example.com'],
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+# Instantiate the DAG
+with DAG(
+    dag_id='my_first_gcp_dag', # Unique identifier for the DAG
+    default_args=default_args,
+    description='A simple DAG to demonstrate Google Cloud principles',
+    schedule_interval=timedelta(days=1), # Run once every day
+    start_date=datetime(2023, 1, 1), # The date from which the DAG starts running
+    catchup=False, # Don't run for past missed schedules if deployed late
+    tags=['example', 'gcp'], # Tags for organization in the Airflow UI
+) as dag:
+    # --- Example Tasks (not strictly part of DAG configuration, but often included for context) ---
+    # You would define your actual data pipeline tasks here
+
+    start_task = BashOperator(
+        task_id='start_pipeline',
+        bash_command='echo "Starting data pipeline..."',
+    )
+
+    # Further tasks would be defined here and linked to start_task
+    # e.g., data_extraction_task = BigQueryOperator(...)
+    # data_extraction_task >> data_transformation_task
+
+    end_task = BashOperator(
+        task_id='end_pipeline',
+        bash_command='echo "Data pipeline finished." ',
+    )
+
+    start_task >> end_task # Define task dependencies
