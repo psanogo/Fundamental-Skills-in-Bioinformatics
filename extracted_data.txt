@@ -1,0 +1,67 @@
+import re
+
+def extract_ips_from_log(log_file_path, output_file_path):
+    """
+    Extracts IPv4 addresses from a given log file and writes them to an output file.
+
+    Args:
+        log_file_path (str): The path to the input log file.
+        output_file_path (str): The path to the output file where extracted IPs will be written.
+    """
+    # Regular expression for matching IPv4 addresses
+    # This pattern matches numbers 0-255 separated by dots.
+    ip_pattern = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
+
+    extracted_ips = set() # Use a set to store unique IP addresses
+
+    try:
+        with open(log_file_path, 'r') as infile:
+            for line in infile:
+                # Find all occurrences of the IP pattern in the current line
+                found_ips = ip_pattern.findall(line)
+                for ip in found_ips:
+                    # Basic validation for IP ranges (optional but good practice)
+                    # This ensures numbers are actually 0-255
+                    if all(0 <= int(x) <= 255 for x in ip.split('.')):
+                        extracted_ips.add(ip)
+    except FileNotFoundError:
+        print(f"Error: Log file not found at {log_file_path}")
+        return
+    except Exception as e:
+        print(f"An error occurred while reading the log file: {e}")
+        return
+
+    try:
+        with open(output_file_path, 'w') as outfile:
+            for ip in sorted(list(extracted_ips)): # Write unique IPs, sorted
+                outfile.write(ip + '\n')
+        print(f"Successfully extracted {len(extracted_ips)} unique IP addresses to {output_file_path}")
+    except Exception as e:
+        print(f"An error occurred while writing to the output file: {e}")
+
+# --- Example Usage ---
+# Create a dummy log file for demonstration purposes
+# In a real scenario, this file would already exist.
+dummy_log_content = """
+INFO 192.168.1.100 - user_alpha [10/Nov/2023:10:00:01 +0000] "GET /index.html HTTP/1.1" 200 1234
+WARN 10.0.0.5 - user_beta [10/Nov/2023:10:00:05 +0000] "POST /api/data HTTP/1.1" 404 56
+ERROR 172.16.255.255 - user_gamma [10/Nov/2023:10:00:10 +0000] "GET /admin HTTP/1.1" 500 78
+INFO 192.168.1.100 - user_delta [10/Nov/2023:10:00:15 +0000] "GET /images/logo.png HTTP/1.1" 200 90
+DEBUG 127.0.0.1 - localhost [10/Nov/2023:10:00:20 +0000] "OPTIONS * HTTP/1.0" 200 -
+Another line with no IP.
+Invalid IP: 999.999.999.999
+"""
+with open('webserver.log', 'w') as f:
+    f.write(dummy_log_content)
+
+# Define file paths
+log_file = 'webserver.log'
+output_file = 'extracted_data.txt'
+
+# Run the function
+extract_ips_from_log(log_file, output_file)
+
+# You can then verify the contents of 'extracted_data.txt'
+# with open(output_file, 'r') as f:
+#     print("\nContent of extracted_data.txt:")
+#     print(f.read())
