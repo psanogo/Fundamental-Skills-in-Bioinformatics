@@ -1,0 +1,85 @@
+import datetime # Often useful if handling dates
+
+def insert_records(records_to_insert, db_connection):
+    """
+    Inserts a list of records into the 'sales_data' table.
+
+    Args:
+        records_to_insert (list of dicts/tuples): A list where each element
+                                                  represents a record to be inserted.
+                                                  Example: [{'row_id': 1, 'sale_date': '2023-01-01', 'product_id': 'P1', 'amount': 100.0, 'country': 'USA'}]
+                                                  or [(1, '2023-01-01', 'P1', 100.0, 'USA')]
+        db_connection: An active database connection object.
+
+    Returns:
+        int: The number of records successfully inserted.
+             Returns 0 if no records were provided or an error occurred.
+    """
+    if not records_to_insert:
+        print("No records provided for insertion.")
+        return 0
+
+    try:
+        cursor = db_connection.cursor()
+        
+        # Determine columns based on the first record if it's a dictionary
+        # For simplicity, assuming a fixed set of columns here for the sales_data table
+        columns = ['row_id', 'sale_date', 'product_id', 'amount', 'country']
+        
+        # Prepare the SQL INSERT statement with placeholders
+        # This approach helps prevent SQL injection
+        placeholders = ', '.join(['%s'] * len(columns)) # For MySQL/PostgreSQL-like drivers
+        # Or '?' * len(columns) for SQLite, or similar for other databases
+        
+        # If using BigQuery or a specific database with specific insert syntax,
+        # the SQL statement might differ (e.g., INSERT INTO ... VALUES (...), (...))
+        # For a generic relational database:
+        sql_insert = f"INSERT INTO sales_data ({', '.join(columns)}) VALUES ({placeholders})"
+        
+        # Prepare the data for batch insertion
+        # Ensure that the order of values matches the order of columns
+        values_to_insert = []
+        for record in records_to_insert:
+            if isinstance(record, dict):
+                # Map dictionary values to the correct column order
+                values_to_insert.append(tuple(record.get(col) for col in columns))
+            elif isinstance(record, (list, tuple)) and len(record) == len(columns):
+                # Assume the order of values in the tuple/list matches 'columns'
+                values_to_insert.append(tuple(record))
+            else:
+                print(f"Skipping malformed record: {record}")
+                continue
+
+        if not values_to_insert:
+            print("No valid records to insert after parsing.")
+            return 0
+
+        # Execute the batch insert
+        # For psycopg2 (PostgreSQL) or mysql.connector (MySQL):
+        cursor.executemany(sql_insert, values_to_insert)
+        
+        # Commit the transaction (essential for changes to persist)
+        db_connection.commit()
+        
+        print(f"Successfully inserted {cursor.rowcount} records.")
+        return cursor.rowcount
+        
+    except Exception as e:
+        # Rollback on error
+        if db_connection:
+            db_connection.rollback()
+        print(f"Error inserting records: {e}")
+        return 0
+    finally:
+        # Close the cursor
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+
+# Example Usage (conceptual, as db_connection needs to be established):
+# Assuming you have a connection object 'my_db_conn'
+# new_sales_data = [
+#     {'row_id': 101, 'sale_date': '2023-11-01', 'product_id': 'P_NEW_1', 'amount': 250.50, 'country': 'Canada'},
+#     {'row_id': 102, 'sale_date': '2023-11-01', 'product_id': 'P_NEW_2', 'amount': 120.00, 'country': 'USA'},
+# ]
+# inserted_count = insert_records(new_sales_data, my_db_conn)
+# print(f"Total records inserted: {inserted_count}")
