@@ -1,0 +1,38 @@
+from airflow import DAG
+from datetime import datetime
+
+# Define basic default arguments for the DAG
+# These arguments apply to all tasks within the DAG unless overridden
+default_args = {
+    'owner': 'data_team',
+    'start_date': datetime(2023, 1, 1), # Essential: defines when the DAG starts
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+# Instantiate the DAG object
+# This defines the DAG's unique ID and its high-level properties
+with DAG(
+    dag_id='simple_data_pipeline_dag', # Unique identifier for this DAG
+    default_args=default_args,
+    description='A basic DAG for a sales data pipeline',
+    schedule_interval='@daily', # Defines how often the DAG runs (e.g., daily)
+    catchup=False, # Prevents backfilling for past missed runs upon deployment
+    tags=['sales', 'pipeline', 'demo'],
+) as dag:
+    # --- Tasks would be defined here ---
+    # Example:
+    # from airflow.operators.bash import BashOperator
+    #
+    # start_task = BashOperator(
+    #     task_id='start_process',
+    #     bash_command='echo "Starting data processing..."',
+    # )
+    #
+    # end_task = BashOperator(
+    #     task_id='end_process',
+    #     bash_command='echo "Data processing finished."',
+    # )
+    #
+    # start_task >> end_task # Define task dependencies
+    pass # 'pass' indicates an empty block, as tasks are not required for the DAG definition itself
