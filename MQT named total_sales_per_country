@@ -1,0 +1,8 @@
+CREATE MATERIALIZED VIEW total_sales_per_country AS
+SELECT
+    country,
+    SUM(sales_amount) AS total_sales
+FROM
+    sales_data
+GROUP BY
+    country;
