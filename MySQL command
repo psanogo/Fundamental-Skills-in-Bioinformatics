@@ -1,0 +1,1 @@
+mysqldump -h localhost -P 3306 -u root -p database_name FactSales > sales_backup.sql
